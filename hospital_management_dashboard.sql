@@ -1,4 +1,4 @@
--- Project Phase 1 — Appointment Details View s
+-- Project Phase 1 — Appointment Details View ssdfs
 CREATE VIEW vw_appointment_details AS
 SELECT
     a.appointment_code,
