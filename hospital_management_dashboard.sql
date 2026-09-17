@@ -1,4 +1,4 @@
--- Project Phase 1 — Appointment Details View
+-- Project Phase 1 — Appointment Details View sdfsddfsd
 CREATE VIEW vw_appointment_details AS
 SELECT
     a.appointment_code,
@@ -96,9 +96,6 @@ GROUP BY
     
 SELECT * FROM vw_billing_summary;
 
-SELECT * FROM vw_billing_summary
-WHERE payment_status='Pending';
-
 -- Business KPI phase of the project.
 -- KPI 1 — Total Hospital Revenue.
 SELECT
@@ -154,7 +151,8 @@ GROUP BY
 ORDER BY
     year,
     month;
-    
+ 
+
 SELECT
     DATE_FORMAT(payment_date, '%Y-%m') AS revenue_month,
     SUM(amount_paid) AS monthly_revenue
@@ -163,3 +161,68 @@ GROUP BY DATE_FORMAT(payment_date, '%Y-%m')
 ORDER BY revenue_month;    
 
     
+-- Pending bills report KPI
+-- Show patients who still have a balance to pay. 
+SELECT * FROM vw_billing_summary
+WHERE payment_status='Pending';
+
+-- this is correct. 
+SELECT
+    patient_code,
+    patient_name,
+    total_amount,
+    amount_paid,
+    balance_amount
+FROM vw_billing_summary
+WHERE balance_amount > 0
+ORDER BY balance_amount DESC;
+
+-- Show total pending amount for the hospital.
+SELECT
+    SUM(balance_amount) AS total_pending_amount
+FROM vw_billing_summary
+WHERE balance_amount > 0
+ORDER BY balance_amount;
+
+-- correct methoded
+SELECT
+    COALESCE(SUM(balance_amount), 0) AS total_pending_amount
+FROM vw_billing_summary
+WHERE balance_amount > 0;
+
+-- Show total amount collected by each payment_method, highest amount first.
+select * from payments;
+select payment_method, sum(amount_paid) as total_amount from payments
+group by payment_method
+order by total_amount desc ;
+
+-- Find the average treatment cost for each doctor, highest average first.
+select d.doctor_name,
+ avg(t.treatment_cost) as average_treatment_cost from treatments t
+join doctors d on t.doctor_id = d.doctor_id
+group by d.doctor_name;
+
+
+-- Find the total treatment cost for each admission, 
+-- showing:admission_code patient_name total_treatment_cost
+select a.admission_code, p.patient_name, 
+sum(t.treatment_cost) as total_treatment_cost from treatments t 
+join admissions a on t.admission_id = a.admission_id 
+join patients p on a.patient_id = p.patient_id
+group by a.admission_code, p.patient_name;
+
+-- Show the total bill amount, total paid amount, and remaining balance for each patient.
+-- Use vw_billing_summary with SUM() and GROUP BY patient_code, patient_name.
+select * from vw_billing_summary;
+select  patient_code, patient_name,sum(total_amount) as total_bill_amount ,
+sum(amount_paid) as 'total paid amount', sum(balance_amount) as 'remaining balance'
+from vw_billing_summary
+group by patient_code, patient_name;
+
+-- Find the patient with the highest remaining balance.
+select  patient_code, patient_name,sum(total_amount) as total_bill_amount ,
+sum(amount_paid) as total_paid_amount, sum(balance_amount) as remaining_balance
+from vw_billing_summary
+group by patient_code, patient_name
+order by remaining_balance desc limit 1;
+ 
